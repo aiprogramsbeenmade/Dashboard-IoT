@@ -1,0 +1,11 @@
+# Python
+__pycache__/
+*.pyc
+venv/
+
+# Database
+home_iot.db
+
+# Sensibile
+.env# created by virtualenv automatically
+.env
