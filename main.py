@@ -19,6 +19,7 @@ from database import (
 from services.alert_service import send_telegram_alert
 from datetime import datetime, timedelta
 from services.alert_service import send_telegram_alert
+from services.waste_service import get_waste_info # In alto con gli altri import
 
 
 
@@ -159,6 +160,10 @@ async def wifi_info():
         "password": pwd,
         "encryption": enc
     }
+
+@app.get("/api/waste")
+async def waste_endpoint():
+    return {"status": "success", "data": get_waste_info()}
 
 if __name__ == "__main__":
     import uvicorn

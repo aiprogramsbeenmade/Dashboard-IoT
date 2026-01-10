@@ -131,6 +131,22 @@ async function updateDashboard() {
             }
         }),
 
+        fetchModule('/api/waste', (res) => {
+            const data = res.data;
+            const todayEl = document.getElementById('waste-today');
+            const tomorrowEl = document.getElementById('waste-tomorrow');
+            const cardEl = document.getElementById('waste-card');
+
+            if (todayEl && data.today) {
+                todayEl.innerText = data.today.label;
+                todayEl.className = `text-xl font-bold ${data.today.color}`;
+                cardEl.style.borderLeftColor = getComputedStyle(document.documentElement).getPropertyValue(`--${data.today.color.split('-')[1]}-500`) || '#475569';
+            }
+            if (tomorrowEl && data.tomorrow) {
+                tomorrowEl.innerText = data.tomorrow.label;
+            }
+        }),
+
         // Ping
         fetchModule('/api/ping', (data) => {
             const val = document.getElementById('ping-val');
