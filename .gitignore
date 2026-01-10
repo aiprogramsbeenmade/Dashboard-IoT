@@ -12,4 +12,6 @@ home_iot.db
 .envlib/
 bin/
 .idea/
+lib/
 pyvenv.cfg
+
