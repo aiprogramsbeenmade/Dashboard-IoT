@@ -198,35 +198,36 @@ async def waste_endpoint():
 
 
 def run_polling():
-    """Questa funzione controlla i messaggi di Telegram in loop"""
+    """Il Raspberry chiede a Telegram: 'Ci sono messaggi?'"""
+    # Prima di tutto, cancelliamo vecchi Webhook residui che bloccano il bot
+    requests.get(f"{TELEGRAM_URL}/deleteWebhook")
+
     offset = 0
-    print("\n🚀 Bot in ascolto (modalità POLLING attiva)...")
-    print("Non serve configurare Tailscale o Webhook. Il bot risponderà da solo.\n")
+    print("\n🚀 BOT ATTIVO IN MODALITÀ POLLING")
+    print("Ora il bot risponderà a prescindere da Tailscale o porte aperte.\n")
 
     while True:
         try:
-            # Chiediamo a Telegram i nuovi messaggi
             url = f"{TELEGRAM_URL}/getUpdates?offset={offset}&timeout=10"
-            r = requests.get(url, timeout=15).json()
+            response = requests.get(url, timeout=15).json()
 
-            if r.get("ok"):
-                for update in r["result"]:
-                    # Usiamo la funzione che avevi già scritto per gestire i messaggi!
+            if response.get("ok"):
+                for update in response["result"]:
+                    # Eseguiamo la gestione del messaggio che abbiamo già scritto
                     import asyncio
                     asyncio.run(telegram_webhook(update))
-                    # Aggiorniamo l'offset per non leggere due volte lo stesso messaggio
+                    # Passiamo al prossimo messaggio
                     offset = update["update_id"] + 1
         except Exception as e:
-            print(f"Errore durante il polling: {e}")
-
+            print(f"Errore: {e}")
         time.sleep(1)
 
 
 if __name__ == "__main__":
     import uvicorn
 
-    # Avviamo il bot in un thread separato (background)
+    # Avviamo il bot in 'sottofondo'
     threading.Thread(target=run_polling, daemon=True).start()
 
-    # Avviamo il server della Dashboard
+    # Avviamo la dashboard (accessibile via IP locale o Tailscale standard)
     uvicorn.run(app, host="0.0.0.0", port=8000)
