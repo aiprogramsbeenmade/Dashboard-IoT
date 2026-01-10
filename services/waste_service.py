@@ -1,23 +1,25 @@
-from datetime import datetime
+from database import get_full_waste_calendar
+
+WASTE_COLORS = {
+    "Umido": {"color": "text-orange-400", "bg": "border-orange-500"},
+    "Carta": {"color": "text-blue-400", "bg": "border-blue-500"},
+    "Plastica": {"color": "text-yellow-400", "bg": "border-yellow-500"},
+    "Indifferenziato": {"color": "text-slate-400", "bg": "border-slate-500"},
+    "Vetro": {"color": "text-emerald-400", "bg": "border-emerald-500"},
+    "Nessuno": {"color": "text-slate-500", "bg": "border-slate-700"}
+}
 
 
 def get_waste_info():
-    # Mappa dei rifiuti di Anagni
-    # Lun: Umido, Mar: Carta, Mer: Umido, Gio: Plastica/Metalli, Ven: Indifferenziato, Sab: Umido
-    calendar = {
-        0: {"label": "Umido", "color": "text-orange-400", "bg": "border-orange-500"},
-        1: {"label": "Carta e Cartone", "color": "text-blue-400", "bg": "border-blue-500"},
-        2: {"label": "Umido", "color": "text-orange-400", "bg": "border-orange-500"},
-        3: {"label": "Plastica e Metalli", "color": "text-yellow-400", "bg": "border-yellow-500"},
-        4: {"label": "Indifferenziato", "color": "text-slate-400", "bg": "border-slate-500"},
-        5: {"label": "Umido", "color": "text-orange-400", "bg": "border-orange-500"},
-        6: {"label": "Nessun Ritiro", "color": "text-slate-500", "bg": "border-slate-700"}
-    }
+    db_calendar = get_full_waste_calendar()
 
     today_idx = datetime.now().weekday()
     tomorrow_idx = (today_idx + 1) % 7
 
+    today_label = db_calendar.get(today_idx, "Nessuno")
+    tomorrow_label = db_calendar.get(tomorrow_idx, "Nessuno")
+
     return {
-        "today": calendar[today_idx],
-        "tomorrow": calendar[tomorrow_idx]
+        "today": {**WASTE_COLORS.get(today_label, WASTE_COLORS["Nessuno"]), "label": today_label},
+        "tomorrow": {"label": tomorrow_label}
     }

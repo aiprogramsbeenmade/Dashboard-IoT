@@ -80,3 +80,35 @@ def get_setting(key):
         return None
     finally:
         conn.close()
+
+def init_waste_db():
+    conn = sqlite3.connect("home_iot.db")
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS waste_calendar (
+            day_idx INTEGER PRIMARY KEY,
+            label TEXT
+        )
+    """)
+    # Popola con valori di default se vuoto
+    cursor.execute("SELECT COUNT(*) FROM waste_calendar")
+    if cursor.fetchone()[0] == 0:
+        defaults = [(0, "Umido"), (1, "Carta"), (2, "Umido"), (3, "Plastica"), (4, "Indifferenziato"), (5, "Umido"), (6, "Nessuno")]
+        cursor.executemany("INSERT INTO waste_calendar VALUES (?, ?)", defaults)
+    conn.commit()
+    conn.close()
+
+def update_waste_day(day_idx, label):
+    conn = sqlite3.connect("home_iot.db")
+    cursor = conn.cursor()
+    cursor.execute("UPDATE waste_calendar SET label = ? WHERE day_idx = ?", (label, day_idx))
+    conn.commit()
+    conn.close()
+
+def get_full_waste_calendar():
+    conn = sqlite3.connect("home_iot.db")
+    cursor = conn.cursor()
+    cursor.execute("SELECT day_idx, label FROM waste_calendar ORDER BY day_idx")
+    res = {row[0]: row[1] for row in cursor.fetchall()}
+    conn.close()
+    return res

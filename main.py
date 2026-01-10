@@ -20,8 +20,9 @@ from services.alert_service import send_telegram_alert
 from datetime import datetime, timedelta
 from services.alert_service import send_telegram_alert
 from services.waste_service import get_waste_info # In alto con gli altri import
+import requests
 
-
+TELEGRAM_URL = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_TOKEN')}"
 
 # Registro per evitare notifiche ripetitive
 last_alerts = {
@@ -143,6 +144,57 @@ async def test_telegram():
     if success:
         return {"status": "success", "message": "Controlla Telegram!"}
     return {"status": "error", "message": "Errore nell'invio. Controlla Token e ID."}
+
+
+@app.post("/api/telegram/webhook")
+async def telegram_webhook(update: dict):
+    # Gestione messaggi di testo
+    if "message" in update:
+        text = update["message"].get("text", "")
+        chat_id = update["message"]["chat"]["id"]
+
+        if text == "/editwaste":
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "Lun", "callback_data": "day_0"}, {"text": "Mar", "callback_data": "day_1"}, {"text": "Mer", "callback_data": "day_2"}],
+                    [{"text": "Gio", "callback_data": "day_3"}, {"text": "Ven", "callback_data": "day_4"}, {"text": "Sab", "callback_data": "day_5"}],
+                    [{"text": "Dom", "callback_data": "day_6"}]
+                ]
+            }
+            send_message(chat_id, "Scegli il giorno da modificare:", keyboard)
+
+    # Gestione clic sui pulsanti (Callback Query)
+    elif "callback_query" in update:
+        data = update["callback_query"]["data"]
+        chat_id = update["callback_query"]["message"]["chat"]["id"]
+        callback_id = update["callback_query"]["id"]
+
+        if data.startswith("day_"):
+            day_idx = data.split("_")[1]
+            keyboard = {
+                "inline_keyboard": [
+                    [{"text": "🍎 Umido", "callback_data": f"set_{day_idx}_Umido"}],
+                    [{"text": "📄 Carta", "callback_data": f"set_{day_idx}_Carta"}],
+                    [{"text": "🟡 Plastica", "callback_data": f"set_{day_idx}_Plastica"}],
+                    [{"text": "🗑 Indifferenziata", "callback_data": f"set_{day_idx}_Indifferenziato"}],
+                    [{"text": "🍾 Vetro", "callback_data": f"set_{day_idx}_Vetro"}]
+                ]
+            }
+            send_message(chat_id, f"Cosa si butta il giorno {day_idx}?", keyboard)
+
+        elif data.startswith("set_"):
+            # Formato: set_indice_Rifiuto
+            _, day_idx, label = data.split("_")
+            update_waste_day(int(day_idx), label)
+            send_message(chat_id, f"✅ Aggiornato! Ora il giorno {day_idx} è: {label}")
+
+    return {"status": "ok"}
+
+def send_message(chat_id, text, reply_markup=None):
+    payload = {"chat_id": chat_id, "text": text}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
 
 @app.get("/api/wifi-info")
 async def wifi_info():
