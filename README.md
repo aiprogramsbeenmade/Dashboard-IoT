@@ -36,7 +36,7 @@ Una dashboard domotica avanzata e interattiva basata su **Python (Flask)** e **T
    ```bash
    python3 main.py
    ```
-    La dashboard sarà disponibile su http://localhost:5000.
+    La dashboard sarà disponibile su http://localhost:8000.
 
 ## 🎮 Arcade Mode & Gaming
 La dashboard integra una **Console Arcade** isolata in un ambiente Modal per un'esperienza di gioco immersiva.
