@@ -1,4 +1,7 @@
-from fastapi import FastAPI
+import os
+from dotenv import load_dotenv
+load_dotenv()
+from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from services.weather_service import get_weather_data
@@ -16,6 +19,8 @@ from database import (
 from services.alert_service import send_telegram_alert
 from datetime import datetime, timedelta
 from services.alert_service import send_telegram_alert
+
+
 
 # Registro per evitare notifiche ripetitive
 last_alerts = {
@@ -36,7 +41,9 @@ def should_send_alert(category):
 
 
 app = FastAPI()
+
 init_db()
+
 
 # Serve per rendere accessibili i file HTML, CSS e JS nella cartella static
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -135,6 +142,23 @@ async def test_telegram():
     if success:
         return {"status": "success", "message": "Controlla Telegram!"}
     return {"status": "error", "message": "Errore nell'invio. Controlla Token e ID."}
+
+@app.get("/api/wifi-info")
+async def wifi_info():
+    ssid = os.getenv("WIFI_SSID")
+    pwd = os.getenv("WIFI_PASSWORD")
+    enc = os.getenv("WIFI_ENCRYPTION", "WPA")
+
+    if not ssid or not pwd:
+        # Questo apparirà nel terminale se c'è un errore
+        print("ERRORE: Variabili WIFI non trovate nel .env!")
+        raise HTTPException(status_code=500, detail="Configurazione WiFi incompleta")
+
+    return {
+        "ssid": ssid,
+        "password": pwd,
+        "encryption": enc
+    }
 
 if __name__ == "__main__":
     import uvicorn

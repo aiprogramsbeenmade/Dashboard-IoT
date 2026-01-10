@@ -2,16 +2,17 @@
 __pycache__/
 *.pyc
 venv/
-
-# Database
-home_iot.db
-
-# Sensibile
-.env# created by virtualenv automatically
-.env
-.envlib/
 bin/
-.idea/
 lib/
 pyvenv.cfg
 
+# Database locale
+home_iot.db
+
+# Sensibile (Sicurezza)
+.env
+
+# Editor e Sistema
+.idea/
+.vscode/
+.DS_Store
