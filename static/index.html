@@ -124,6 +124,181 @@
                 <div class="text-[10px] text-slate-500 font-mono mt-2">Clicca per ingrandire</div>
             </div>
 
+<div id="mascot-container" class="glass p-4 rounded-2xl border-l-4 border-pink-500 mascot-card max-h-[180px] overflow-hidden">    <div id="mascot-sprite" class="mascot-happy">
+        <div class="eyes">
+            <span class="eye"></span>
+            <span class="eye"></span>
+        </div>
+        <div class="mouth"></div>
+    </div>
+    <div class="speech-bubble">
+        <p id="mascot-text">Ciao! Sto caricando i dati...</p>
+    </div>
+</div>
+
+<style>
+    /* --- INTEGRAZIONE MASCOTTE --- */
+.mascot-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    text-align: center;
+    min-height: 160px;
+}
+
+#mascot-sprite {
+    width: 65px;
+    height: 65px;
+    margin: 0 auto;
+    background: #10b981; /* Smeraldo di base */
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
+.eyes {
+    position: absolute;
+    top: 25px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 12px;
+}
+
+.eye {
+    width: 8px;
+    height: 8px;
+    background: #0f172a;
+    border-radius: 50%;
+    transition: height 0.3s ease;
+}
+
+.mouth {
+    width: 20px;
+    height: 10px;
+    border-bottom: 3px solid #0f172a;
+    border-radius: 0 0 10px 10px;
+    margin-top: 35px;
+}
+
+/* Stati Mascotte */
+.mascot-sleeping { background: #64748b !important; filter: grayscale(0.5); transform: scale(0.9); }
+.mascot-hot { background: #ef4444 !important; animation: shake 0.2s infinite; }
+.mascot-confused { background: #f59e0b !important; }
+
+.speech-bubble {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-top: 10px;
+    width: 100%;
+}
+
+/* --- INTEGRAZIONE ARCADE --- */
+.arcade-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 160px;
+}
+
+#snakeGame {
+    background: rgba(15, 23, 42, 0.5);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    max-width: 100%;
+    height: auto;
+    cursor: crosshair;
+}
+
+#start-btn {
+    background: #38bdf8;
+    color: #0f172a;
+    border: none;
+    padding: 5px 15px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+    margin-top: 5px;
+}
+
+#start-btn:hover {
+    background: #7dd3fc;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    transform: translateY(-1px);
+}
+
+.arcade-controls p {
+    font-size: 10px;
+    margin-top: 5px;
+}
+
+/* --- ANIMAZIONI --- */
+@keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    20% { transform: translate(-1px, 0px) rotate(-1deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    60% { transform: translate(-1px, 1px) rotate(0deg); }
+    80% { transform: translate(1px, 1px) rotate(-1deg); }
+    100% { transform: translate(-1px, -1px) rotate(1deg); }
+}
+</style>
+
+<script>
+    async function refreshMascot() {
+        try {
+            const response = await fetch('/api/mascot');
+            const data = await response.json();
+
+            const sprite = document.getElementById('mascot-sprite');
+            const text = document.getElementById('mascot-text');
+
+            // Aggiorna testo
+            text.innerText = data.message;
+
+            // Aggiorna aspetto rimuovendo vecchie classi e aggiungendo la nuova
+            sprite.className = '';
+            sprite.classList.add('mascot-' + data.status);
+
+            // Modifica gli occhi per lo stato "sleeping"
+            const eyes = document.querySelectorAll('.eye');
+            if (data.status === 'sleeping') {
+                eyes.forEach(e => e.style.height = '2px');
+            } else {
+                eyes.forEach(e => e.style.height = '12px');
+            }
+        } catch (err) {
+            console.error("Mascot error:", err);
+        }
+    }
+
+    // Aggiorna ogni 10 secondi
+    setInterval(refreshMascot, 10000);
+    refreshMascot();
+</script>
+<div id="arcade-card" onclick="openArcade()" class="glass p-6 rounded-2xl border-l-4 border-blue-400 min-h-[160px] flex flex-col justify-between transition-all duration-500 cursor-pointer hover:bg-slate-800/50">
+    <div>
+        <p class="text-slate-400 text-sm font-semibold uppercase tracking-wider text-[10px]">Area Arcade</p>
+        <h2 class="text-xl font-bold mt-2 text-blue-400">Bit-Eater OS</h2>
+    </div>
+    <div class="flex justify-center items-center opacity-50">
+        <span class="text-4xl">🕹️</span>
+    </div>
+    <p class="text-[10px] text-slate-500 mt-2">Clicca per lanciare la console</p>
+</div>
+
         </div> </div> <div id="shelly-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50 p-4">
         <div class="glass max-w-2xl w-full p-8 rounded-3xl relative">
             <button onclick="closeModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-2xl">&times;</button>
@@ -142,6 +317,46 @@
         </div>
     </div>
 
+<div id="arcade-modal" class="fixed inset-0 bg-black/95 backdrop-blur-xl hidden flex items-center justify-center z-[70] p-4">
+    <div class="glass max-w-2xl w-full p-8 rounded-3xl relative border border-blue-500/30">
+        <button onclick="closeArcade()" class="absolute top-4 right-4 text-slate-400 hover:text-white text-3xl">&times;</button>
+
+        <div id="arcade-menu">
+            <h3 class="text-3xl font-black mb-8 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent text-center">SELECT SYSTEM</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div onclick="initGame('snake')" class="glass p-6 rounded-xl border border-blue-500/20 hover:border-blue-400 cursor-pointer transition-all group">
+                    <span class="text-4xl block mb-2 group-hover:scale-110 transition-transform">🐍</span>
+                    <h4 class="font-bold text-blue-400">Bit-Eater</h4>
+                    <p class="text-[10px] text-slate-500">Il classico Snake in versione data-packet.</p>
+                </div>
+                <div onclick="initGame('pong')" class="glass p-6 rounded-xl border border-purple-500/20 hover:border-purple-400 cursor-pointer transition-all group">
+                    <span class="text-4xl block mb-2 group-hover:scale-110 transition-transform">🏓</span>
+                    <h4 class="font-bold text-purple-400">Packet-Pong</h4>
+                    <p class="text-[10px] text-slate-500">Sfida il firewall in una partita a Pong.</p>
+                </div>
+                <div class="glass p-6 rounded-xl border border-slate-700 opacity-50">
+                    <span class="text-4xl block mb-2">🗑️</span>
+                    <h4 class="font-bold text-slate-500">Trash-Smasher</h4>
+                    <p class="text-[10px] text-slate-600">Prossimamente: smista i rifiuti al volo.</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-screen" class="hidden">
+            <button onclick="backToMenu()" class="text-xs text-blue-400 mb-4 hover:underline">← Torna al Menu</button>
+            <div class="flex justify-center mb-6">
+                <canvas id="arcadeCanvas" width="400" height="300" class="rounded-xl border-2 border-blue-500/30 bg-slate-900"></canvas>
+            </div>
+            <div id="game-ui" class="flex justify-between items-center px-4">
+                <div class="text-left">
+                    <p id="game-title" class="text-blue-400 font-bold uppercase tracking-widest">GIOCO</p>
+                    <p class="text-2xl font-black" id="arcadeScore">0</p>
+                </div>
+                <button id="arcadeActionBtn" class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold transition-all">START</button>
+            </div>
+        </div>
+    </div>
+</div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="/static/script.js"></script>
 </body>

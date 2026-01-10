@@ -223,6 +223,40 @@ def run_polling():
         time.sleep(1)
 
 
+@app.get("/api/mascot")
+async def get_mascot_data():
+    try:
+        # 1. Recupero temperatura CPU
+        try:
+            temps = psutil.sensors_temperatures()
+            cpu_temp = temps.get('cpu_thermal', temps.get('coretemp', [None]))[0].current
+        except Exception:
+            cpu_temp = 45.0
+
+        # 2. Controllo orario (CORRETTO per Opzione A)
+        ora = datetime.now().hour
+
+        # 3. Logica degli stati
+        if 0 <= ora <= 6:
+            status = "sleeping"
+            message = "Zzz... i server sognano pecore elettriche?"
+        elif cpu_temp > 75:
+            status = "hot"
+            message = f"Accidenti, scotto! ({cpu_temp}°C) Dammi tregua!"
+        else:
+            status = "happy"
+            message = "Tutto sotto controllo. Hai buttato la spazzatura?"
+
+        return {
+            "status": status,
+            "message": message,
+            "cpu_temp": cpu_temp,
+            # QUI C'ERA L'ERRORE: deve essere datetime.now()
+            "time": datetime.now().strftime("%H:%M")
+        }
+    except Exception as e:
+        return {"status": "confused", "message": f"Errore interno: {str(e)}", "cpu_temp": 0}
+
 if __name__ == "__main__":
     import uvicorn
 

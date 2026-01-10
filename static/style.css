@@ -1,29 +1,145 @@
-/* Stili Generali */
+/* --- STILI GENERALI --- */
 body {
     background-color: #0f172a;
     color: white;
+    margin: 0;
+    padding: 2rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-/* Effetto Vetro (Glassmorphism) */
+/* --- EFFETTO VETRO (GLASSMORPHISM) --- */
 .glass {
     background: rgba(30, 41, 59, 0.7);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: transform 0.2s ease;
+    transition: transform 0.2s ease, background 0.3s ease;
 }
 
-/* Effetto al passaggio del mouse */
 .glass:hover {
     transform: scale(1.02);
+    background: rgba(30, 41, 59, 0.8);
 }
 
-/* Nasconde il modal di base */
+/* --- UTILITY --- */
 .hidden {
     display: none !important;
 }
 
-/* Sovrapposizione a tutto schermo */
 #shelly-modal {
     background-color: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(8px);
+}
+
+/* --- FIX DIMENSIONI CARD (Mascotte & Arcade) --- */
+/* Forza tutte le card della griglia ad avere la stessa altezza minima */
+.grid > div {
+    min-height: 160px;
+}
+
+.mascot-card, .arcade-card {
+    max-height: 180px; /* Impedisce alle card di esplodere in altezza */
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem !important;
+}
+
+/* --- STILE MASCOTTE (Ottimizzato) --- */
+#mascot-sprite {
+    width: 50px;
+    height: 50px;
+    margin: 0 auto 10px;
+    background: #10b981;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.5s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.eyes {
+    position: absolute;
+    top: 18px;
+    width: 100%;
+    display: flex;
+    justify-content: space-around;
+    padding: 0 10px;
+}
+
+.eye {
+    width: 6px;
+    height: 6px;
+    background: #0f172a;
+    border-radius: 50%;
+}
+
+.mouth {
+    width: 15px;
+    height: 8px;
+    border-bottom: 3px solid #0f172a;
+    border-radius: 0 0 10px 10px;
+    margin-top: 25px;
+}
+
+.speech-bubble {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 10px;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    width: 90%;
+}
+
+/* Stati Mascotte */
+.mascot-sleeping { background: #64748b !important; opacity: 0.6; }
+.mascot-hot { background: #ef4444 !important; animation: shake 0.2s infinite; }
+
+/* --- STILE ARCADE (Ottimizzato) --- */
+#snakeGame {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 8px;
+    display: block;
+    margin: 5px auto;
+    width: 130px; /* Forza larghezza visiva */
+    height: 130px; /* Forza altezza visiva */
+}
+
+#start-btn {
+    background: #38bdf8;
+    color: #0f172a;
+    border: none;
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+#start-btn:hover {
+    background: #7dd3fc;
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+}
+
+.arcade-controls p {
+    font-size: 10px;
+    color: #38bdf8;
+    margin: 4px 0;
+}
+
+.hint {
+    font-size: 0.65rem;
+    color: #64748b;
+}
+
+/* --- ANIMAZIONI --- */
+@keyframes shake {
+    0% { transform: translate(1px, 1px); }
+    50% { transform: translate(-1px, -1px); }
+    100% { transform: translate(1px, -1px); }
 }

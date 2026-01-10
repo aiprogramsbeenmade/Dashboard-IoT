@@ -1,4 +1,5 @@
 from database import get_full_waste_calendar
+from datetime import datetime
 
 WASTE_COLORS = {
     "Umido": {"color": "text-orange-400", "bg": "border-orange-500"},
