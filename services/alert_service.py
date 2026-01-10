@@ -13,6 +13,26 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 # Inizializziamo il bot con la libreria telebot
 bot = telebot.TeleBot(TOKEN)
 
+def get_system_status():
+    # Temperatura (Funziona solo su Raspberry)
+    try:
+        temp = subprocess.check_output(["vcgencmd", "measure_temp"]).decode("utf-8").replace("temp=", "")
+    except:
+        temp = "N/D"
+
+    # Uso CPU e RAM
+    cpu_usage = psutil.cpu_percent(interval=1)
+    ram = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+
+    status_msg = (
+        f"🌡️ <b>Temp:</b> {temp}\n"
+        f"📊 <b>CPU:</b> {cpu_usage}%\n"
+        f"🧠 <b>RAM:</b> {ram.percent}%\n"
+        f"💽 <b>Disco:</b> {disk.percent}%"
+    )
+    return status_msg
+
 def get_tailscale_ip():
     for i in range(10):  # Prova per 10 volte
         try:
@@ -51,6 +71,12 @@ def handle_reboot(message):
     else:
         bot.reply_to(message, "🚫 <b>Accesso negato.</b>\nNon sei autorizzato a riavviare questo server.")
 
+@bot.message_handler(commands=['status'])
+def handle_status(message):
+    if str(message.chat.id) == CHAT_ID:
+        status = get_system_status()
+        bot.reply_to(message, f"📋 <b>Stato Attuale:</b>\n\n{status}", parse_mode="HTML")
+
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
     ts_ip = get_tailscale_ip()
@@ -62,6 +88,7 @@ if __name__ == "__main__":
         f"✅ <b>Sistema Online!</b>\n"
         f"🛡️ Tailscale IP: <code>{ts_ip}</code>\n"
         f"🌐 Dashboard: <a href='{dashboard_url}'>{dashboard_url}</a>\n"
+        f"📋 <b>Stato iniziale:</b>\n{status}"
         f"🚀 Servizi pronti all'uso."
     )
 
