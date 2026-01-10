@@ -80,6 +80,7 @@ def handle_status(message):
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
     ts_ip = get_tailscale_ip()
+    status = get_system_status()
 
     # Creiamo il link completo alla dashboard
     dashboard_url = f"http://{ts_ip}:8000"
