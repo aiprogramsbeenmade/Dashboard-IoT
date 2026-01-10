@@ -3,3 +3,4 @@ uvicorn
 requests
 psutil
 python-dotenv
+pyTelegramBotAPI
