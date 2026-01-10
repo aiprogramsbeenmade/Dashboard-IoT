@@ -8,6 +8,7 @@ home_iot.db
 
 # Sensibile
 .env# created by virtualenv automatically
+.env
 .envlib/
 bin/
 .idea/
