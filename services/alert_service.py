@@ -14,14 +14,16 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 bot = telebot.TeleBot(TOKEN)
 
 def get_tailscale_ip():
-    try:
-        # Esegue il comando 'tailscale ip -4' che restituisce solo l'IP della rete sicura
-        ip = subprocess.check_output(["tailscale", "ip", "-4"]).decode("utf-8").strip()
-        return ip
-    except Exception:
-        # Se Tailscale è spento o non installato, restituisce un messaggio di errore
-        return "Tailscale non attivo"
-
+    for i in range(10):  # Prova per 10 volte
+        try:
+            ip = subprocess.check_output(["tailscale", "ip", "-4"]).decode("utf-8").strip()
+            if ip:
+                return ip
+        except Exception:
+            pass
+        print(f"In attesa di Tailscale (tentativo {i+1}/10)...")
+        time.sleep(2)  # Aspetta 2 secondi tra un tentativo e l'altro
+    return "Tailscale non attivo"
 def send_telegram_alert(message):
     """
     Questa funzione rimane identica per non rompere main.py.
