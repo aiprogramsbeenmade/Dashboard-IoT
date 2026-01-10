@@ -1,37 +1,36 @@
 import os
+import requests
+from datetime import datetime, timedelta
 from dotenv import load_dotenv
+
+# Carica subito le variabili d'ambiente
 load_dotenv()
+
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+
+# Import dai tuoi servizi
 from services.weather_service import get_weather_data
 from services.crypto_service import get_crypto_data
 from services.shelly_services import get_shelly_status
-import requests
-from database import init_db, save_power_reading, get_recent_readings
 from services.system_service import get_system_status
 from services.aqi_service import get_aqi_data
 from services.ping_service import get_ping_latency
+from services.waste_service import get_waste_info
+from services.alert_service import send_telegram_alert
+
+# Import dal database
 from database import (
     init_db, save_power_reading, get_recent_readings,
-    save_note, get_note, get_setting, update_setting # <-- Aggiungi queste ultime due
+    save_note, get_note, get_setting, update_setting,
+    update_waste_day  # <--- ASSICURATI DI AVERLA IN database.py
 )
-from services.alert_service import send_telegram_alert
-from datetime import datetime, timedelta
-from services.alert_service import send_telegram_alert
-from services.waste_service import get_waste_info # In alto con gli altri import
-import requests
 
 TELEGRAM_URL = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_TOKEN')}"
 
-# Registro per evitare notifiche ripetitive
-last_alerts = {
-    "cpu": datetime.min,
-    "aqi": datetime.min,
-    "ping": datetime.min
-}
-
-# Intervallo minimo tra un alert e l'altro (es. 15 minuti)
+# Registro alert
+last_alerts = {"cpu": datetime.min, "aqi": datetime.min, "ping": datetime.min}
 ALERT_COOLDOWN = timedelta(minutes=15)
 
 def should_send_alert(category):
@@ -41,27 +40,24 @@ def should_send_alert(category):
         return True
     return False
 
-
 app = FastAPI()
 
+# Inizializza il DB (crea tabelle se non esistono)
 init_db()
+init_waste_db()
 
-
-# Serve per rendere accessibili i file HTML, CSS e JS nella cartella static
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/")
 async def read_index():
-    # Quando apri l'indirizzo base, restituisce la pagina HTML
     return FileResponse('static/index.html')
 
+# --- ENDPOINT API ---
 
 @app.get("/api/weather")
 async def weather_endpoint(city: str = None):
-    # Se il frontend non manda nulla, leggiamo dal DB
     if not city or city == "undefined":
         city = get_setting("city") or "Anagni"
-
     return get_weather_data(city)
 
 @app.get("/api/crypto")
@@ -72,15 +68,12 @@ async def crypto_endpoint():
 async def shelly_endpoint():
     data = get_shelly_status('192.168.5.101')
     if data["status"] == "success":
-        # Salviamo il dato nel database ogni volta che viene letto!
         save_power_reading(data["power"])
     return data
 
 @app.get("/api/shelly/toggle")
 async def shelly_toggle():
-    ip = "192.168.5.101"
-    # Per lo Shelly RGBW2 in modalità light l'URL è questo:
-    url = f"http://{ip}/light/0?turn=toggle"
+    url = "http://192.168.5.101/light/0?turn=toggle"
     try:
         response = requests.get(url, timeout=3)
         return {"status": "success", "data": response.json()}
@@ -90,37 +83,31 @@ async def shelly_toggle():
 @app.get("/api/shelly/history")
 async def shelly_history():
     history = get_recent_readings(20)
-    # Formattiamo i dati per Chart.js
-    labels = [row[0].split(" ")[1] for row in history] # Solo l'ora, non la data
+    labels = [row[0].split(" ")[1] for row in history]
     values = [row[1] for row in history]
     return {"status": "success", "labels": labels, "values": values}
-
 
 @app.get("/api/system")
 async def system_endpoint():
     data = get_system_status()
     if data["cpu"] > 90 and should_send_alert("cpu"):
-        send_telegram_alert(f"⚠️ <b>Allerta CPU</b>\nIl server è sotto carico: {data['cpu']}%")
+        send_telegram_alert(f"⚠️ <b>Allerta CPU</b>\nCarico: {data['cpu']}%")
     return data
-
 
 @app.get("/api/aqi")
 async def aqi_endpoint():
-    # Inserisci la tua città
     data = get_aqi_data("Rome")
-
-    # Controlliamo che la risposta sia valida e contenga la chiave 'aqi'
-    if data.get("status") == "success" and "aqi" in data:
-        if data["aqi"] > 100 and should_send_alert("aqi"):
-            send_telegram_alert(f"🌫 <b>Qualità Aria</b>\nLivello AQI elevato: {data['aqi']} ({data['label']})")
-
+    if data.get("status") == "success" and data.get("aqi", 0) > 100 and should_send_alert("aqi"):
+        send_telegram_alert(f"🌫 <b>Aria</b>\nLivello AQI: {data['aqi']}")
     return data
+
 @app.get("/api/ping")
 async def ping_endpoint():
     data = get_ping_latency()
     if data["ms"] > 500 and should_send_alert("ping"):
-        send_telegram_alert(f"🐢 <b>Rete Lenta</b>\nLatenza elevata rilevata: {data['ms']}ms")
+        send_telegram_alert(f"🐢 <b>Lag</b>\nPing: {data['ms']}ms")
     return data
+
 @app.get("/api/note")
 async def read_note():
     return {"status": "success", "note": get_note()}
@@ -130,25 +117,20 @@ async def write_note(data: dict):
     save_note(data.get("note", ""))
     return {"status": "success"}
 
-@app.post("/api/settings/city")
-async def save_city(data: dict):
-    new_city = data.get("city")
-    if new_city:
-        update_setting("city", new_city)
-        return {"status": "success"}
-    return {"status": "error", "message": "Città non valida"}
+# --- GESTIONE TELEGRAM BOT ---
 
-@app.get("/api/test-telegram")
-async def test_telegram():
-    success = send_telegram_alert("🚀 <b>Test Dashboard</b>\nIl bot è configurato correttamente!")
-    if success:
-        return {"status": "success", "message": "Controlla Telegram!"}
-    return {"status": "error", "message": "Errore nell'invio. Controlla Token e ID."}
-
+def send_message(chat_id, text, reply_markup=None):
+    payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
+    if reply_markup:
+        payload["reply_markup"] = reply_markup
+    try:
+        requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload, timeout=5)
+    except Exception as e:
+        print(f"Errore invio Telegram: {e}")
 
 @app.post("/api/telegram/webhook")
 async def telegram_webhook(update: dict):
-    # Gestione messaggi di testo
+    # Messaggi di testo
     if "message" in update:
         text = update["message"].get("text", "")
         chat_id = update["message"]["chat"]["id"]
@@ -161,57 +143,46 @@ async def telegram_webhook(update: dict):
                     [{"text": "Dom", "callback_data": "day_6"}]
                 ]
             }
-            send_message(chat_id, "Scegli il giorno da modificare:", keyboard)
+            send_message(chat_id, "📅 <b>Calendario Rifiuti</b>\nScegli il giorno da modificare:", keyboard)
 
-    # Gestione clic sui pulsanti (Callback Query)
+    # Click pulsanti
     elif "callback_query" in update:
-        data = update["callback_query"]["data"]
-        chat_id = update["callback_query"]["message"]["chat"]["id"]
-        callback_id = update["callback_query"]["id"]
+        query = update["callback_query"]
+        data = query["data"]
+        chat_id = query["message"]["chat"]["id"]
 
         if data.startswith("day_"):
             day_idx = data.split("_")[1]
+            days = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"]
             keyboard = {
                 "inline_keyboard": [
                     [{"text": "🍎 Umido", "callback_data": f"set_{day_idx}_Umido"}],
                     [{"text": "📄 Carta", "callback_data": f"set_{day_idx}_Carta"}],
                     [{"text": "🟡 Plastica", "callback_data": f"set_{day_idx}_Plastica"}],
                     [{"text": "🗑 Indifferenziata", "callback_data": f"set_{day_idx}_Indifferenziato"}],
-                    [{"text": "🍾 Vetro", "callback_data": f"set_{day_idx}_Vetro"}]
+                    [{"text": "🍾 Vetro", "callback_data": f"set_{day_idx}_Vetro"}],
+                    [{"text": "❌ Nessuno", "callback_data": f"set_{day_idx}_Nessuno"}]
                 ]
             }
-            send_message(chat_id, f"Cosa si butta il giorno {day_idx}?", keyboard)
+            send_message(chat_id, f"Cosa si ritira il <b>{days[int(day_idx)]}</b>?", keyboard)
 
         elif data.startswith("set_"):
-            # Formato: set_indice_Rifiuto
             _, day_idx, label = data.split("_")
+            # Aggiorna il Database
             update_waste_day(int(day_idx), label)
-            send_message(chat_id, f"✅ Aggiornato! Ora il giorno {day_idx} è: {label}")
+            send_message(chat_id, f"✅ Configurazione salvata!\n<b>Giorno {day_idx}</b> impostato su <b>{label}</b>.")
 
     return {"status": "ok"}
 
-def send_message(chat_id, text, reply_markup=None):
-    payload = {"chat_id": chat_id, "text": text}
-    if reply_markup:
-        payload["reply_markup"] = reply_markup
-    requests.post(f"{TELEGRAM_URL}/sendMessage", json=payload)
+# --- WIFI & WASTE ---
 
 @app.get("/api/wifi-info")
 async def wifi_info():
     ssid = os.getenv("WIFI_SSID")
     pwd = os.getenv("WIFI_PASSWORD")
-    enc = os.getenv("WIFI_ENCRYPTION", "WPA")
-
     if not ssid or not pwd:
-        # Questo apparirà nel terminale se c'è un errore
-        print("ERRORE: Variabili WIFI non trovate nel .env!")
         raise HTTPException(status_code=500, detail="Configurazione WiFi incompleta")
-
-    return {
-        "ssid": ssid,
-        "password": pwd,
-        "encryption": enc
-    }
+    return {"ssid": ssid, "password": pwd, "encryption": os.getenv("WIFI_ENCRYPTION", "WPA")}
 
 @app.get("/api/waste")
 async def waste_endpoint():
