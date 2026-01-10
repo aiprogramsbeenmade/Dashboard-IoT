@@ -3,6 +3,7 @@ import telebot
 import time
 from dotenv import load_dotenv
 import subprocess
+import psutil
 
 # Carichiamo le variabili dal file .env che hai sul Mac
 load_dotenv()
