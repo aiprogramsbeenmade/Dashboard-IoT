@@ -52,7 +52,17 @@ def handle_reboot(message):
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
     ts_ip = get_tailscale_ip()
-    msg = f"✅ <b>Sistema Online!</b>\n🛡️ Tailscale IP: <code>{ts_ip}</code>\n🚀 Dashboard pronta all'uso."
+
+    # Creiamo il link completo alla dashboard
+    dashboard_url = f"http://{ts_ip}:8000"
+
+    msg = (
+        f"✅ <b>Sistema Online!</b>\n"
+        f"🛡️ Tailscale IP: <code>{ts_ip}</code>\n"
+        f"🌐 Dashboard: <a href='{dashboard_url}'>{dashboard_url}</a>\n"
+        f"🚀 Servizi pronti all'uso."
+    )
+
+    print(f"Bot avviato. Dashboard raggiungibile su: {dashboard_url}")
     send_telegram_alert(msg)
-    print(f"Bot avviato con IP Tailscale: {ts_ip}")
     bot.polling(none_stop=True)
