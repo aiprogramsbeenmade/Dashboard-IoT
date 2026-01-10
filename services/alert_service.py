@@ -2,6 +2,7 @@ import os
 import telebot
 import time
 from dotenv import load_dotenv
+import subprocess
 
 # Carichiamo le variabili dal file .env che hai sul Mac
 load_dotenv()
@@ -11,6 +12,15 @@ CHAT_ID = os.getenv("TELEGRAM_CHAT_ID")
 
 # Inizializziamo il bot con la libreria telebot
 bot = telebot.TeleBot(TOKEN)
+
+def get_tailscale_ip():
+    try:
+        # Esegue il comando 'tailscale ip -4' che restituisce solo l'IP della rete sicura
+        ip = subprocess.check_output(["tailscale", "ip", "-4"]).decode("utf-8").strip()
+        return ip
+    except Exception:
+        # Se Tailscale è spento o non installato, restituisce un messaggio di errore
+        return "Tailscale non attivo"
 
 def send_telegram_alert(message):
     """
@@ -41,16 +51,8 @@ def handle_reboot(message):
 
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
-    print("🤖 Bot Telegram in ascolto per comandi di emergenza...")
-
-    # --- AGGIUNTA: Messaggio di avvio ---
-    try:
-        send_telegram_alert("✅ <b>Sistema Online!</b>\nIl Raspberry Pi è stato avviato e la Dashboard è operativa.")
-    except Exception as e:
-        print(f"Impossibile inviare messaggio di avvio: {e}")
-    # ------------------------------------
-
-    try:
-        bot.polling(none_stop=True)
-    except Exception as e:
-        print(f"Errore durante il polling del bot: {e}")
+    ts_ip = get_tailscale_ip()
+    msg = f"✅ <b>Sistema Online!</b>\n🛡️ Tailscale IP: <code>{ts_ip}</code>\n🚀 Dashboard pronta all'uso."
+    send_telegram_alert(msg)
+    print(f"Bot avviato con IP Tailscale: {ts_ip}")
+    bot.polling(none_stop=True)
