@@ -22,9 +22,15 @@ from services.alert_service import send_telegram_alert
 
 # Import dal database
 from database import (
-    init_db, save_power_reading, get_recent_readings,
-    save_note, get_note, get_setting, update_setting,
-    update_waste_day  # <--- ASSICURATI DI AVERLA IN database.py
+    init_db,
+    save_power_reading,
+    get_recent_readings,
+    save_note,
+    get_note,
+    get_setting,
+    update_setting,
+    init_waste_db,      # <--- AGGIUNGI QUESTA
+    update_waste_day    # <--- AGGIUNGI QUESTA (serve per il bot)
 )
 
 TELEGRAM_URL = f"https://api.telegram.org/bot{os.getenv('TELEGRAM_TOKEN')}"
