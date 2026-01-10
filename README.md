@@ -24,8 +24,9 @@ Una dashboard domotica avanzata e interattiva basata su **Python (Flask)** e **T
 
 1. **Clona il repository:**
    ```bash
-   git clone [https://github.com/tuo-username/iot-home-hub.git](https://github.com/tuo-username/iot-home-hub.git)
-   cd iot-home-hub
+   git clone https://github.com/aiprogramsbeenmade/Dashboard-IoT.git 
+   cd Dashboard-IoT
+
 2. **Installa le dipendenze:**
    ```bash
    pip3 install -r requirements.txt
