@@ -34,6 +34,16 @@ def get_system_status():
     )
     return status_msg
 
+def get_system_logs(service_name="dashboard.service", lines=20):
+    try:
+        # Interroga journalctl per le ultime N righe di un servizio specifico
+        log_output = subprocess.check_output(
+            ["journalctl", "-u", service_name, "-n", str(lines), "--no-pager"]
+        ).decode("utf-8")
+        return log_output
+    except Exception as e:
+        return f"Errore nel recupero log: {e}"
+
 def get_tailscale_ip():
     for i in range(10):  # Prova per 10 volte
         try:
@@ -78,6 +88,24 @@ def handle_status(message):
         status = get_system_status()
         bot.reply_to(message, f"📋 <b>Stato Attuale:</b>\n\n{status}", parse_mode="HTML")
 
+
+@bot.message_handler(commands=['logs'])
+def handle_logs(message):
+    if str(message.chat.id) == CHAT_ID:
+        bot.reply_to(message, "🔍 Recupero degli ultimi log della Dashboard...")
+
+        # Prendiamo i log della dashboard
+        logs = get_system_logs("dashboard.service", lines=15)
+
+        # Telegram ha un limite di caratteri per messaggio (4096).
+        # I log potrebbero essere lunghi, quindi li mettiamo in un blocco monospazio.
+        if len(logs) > 4000:
+            logs = logs[-4000:]  # Tagliamo se troppo lunghi
+
+        bot.send_message(CHAT_ID, f"📄 <b>Ultimi log Dashboard:</b>\n\n<code>{logs}</code>", parse_mode="HTML")
+    else:
+        bot.reply_to(message, "🚫 Accesso negato.")
+
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
     ts_ip = get_tailscale_ip()
@@ -90,7 +118,7 @@ if __name__ == "__main__":
         f"✅ <b>Sistema Online!</b>\n"
         f"🛡️ Tailscale IP: <code>{ts_ip}</code>\n"
         f"🌐 Dashboard: <a href='{dashboard_url}'>{dashboard_url}</a>\n"
-        f"📋 <b>Stato iniziale:</b>\n{status}"
+        f"📋 <b>Stato iniziale:</b>\n{status}\n"
         f"🚀 Servizi pronti all'uso."
     )
 
