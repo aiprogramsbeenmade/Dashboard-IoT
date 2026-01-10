@@ -42,6 +42,14 @@ def handle_reboot(message):
 # Questo blocco viene eseguito SOLO se lanci questo file direttamente
 if __name__ == "__main__":
     print("🤖 Bot Telegram in ascolto per comandi di emergenza...")
+
+    # --- AGGIUNTA: Messaggio di avvio ---
+    try:
+        send_telegram_alert("✅ <b>Sistema Online!</b>\nIl Raspberry Pi è stato avviato e la Dashboard è operativa.")
+    except Exception as e:
+        print(f"Impossibile inviare messaggio di avvio: {e}")
+    # ------------------------------------
+
     try:
         bot.polling(none_stop=True)
     except Exception as e:
