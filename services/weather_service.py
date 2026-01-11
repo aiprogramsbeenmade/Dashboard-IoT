@@ -1,6 +1,6 @@
 import requests
 
-def get_weather_data(city_name="Anagni"):
+def get_weather_data(city_name="Rome"):
     try:
         # 1. Trasformiamo il nome della città in coordinate
         geo_url = f"https://geocoding-api.open-meteo.com/v1/search?name={city_name}&count=1&language=it&format=json"

@@ -4,7 +4,7 @@
  */
 
 // --- 1. VARIABILI GLOBALI ---
-let currentCity = "Anagni";
+let currentCity = "Roma";
 let consumptionChart = null;
 let gameInterval = null;
 let box = 20;

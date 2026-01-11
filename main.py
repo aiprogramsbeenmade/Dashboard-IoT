@@ -136,7 +136,7 @@ def send_message(chat_id, text, reply_markup=None):
     except Exception as e:
         print(f"Errore invio Telegram: {e}")
 
-@app.post("/api/telegram/webhook")
+#@app.post("/api/telegram/webhook")
 async def telegram_webhook(update: dict):
     # Messaggi di testo
     if "message" in update:
